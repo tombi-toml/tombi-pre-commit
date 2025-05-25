@@ -22,6 +22,7 @@ def main():
     # Get current version
     tombi_dep = Requirement(pyproject["project"]["dependencies"][0])
     current_version = Version(list(tombi_dep.specifier)[0].version)
+    print(f"Current version: {current_version}")
 
     # Get newer versions from PyPI
     resp = urllib3.request("GET", "https://pypi.org/pypi/tombi/json")
@@ -33,6 +34,7 @@ def main():
         v for v in versions if v > current_version and not v.is_prerelease
     )
 
+    print(f"Versions to mirror: {versions}")
     for i, version in enumerate(versions):
         tag_name = f"v{version}"
         paths = update_version_in_files(version)
