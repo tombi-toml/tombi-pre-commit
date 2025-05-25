@@ -8,7 +8,7 @@
 
 - id: tombi-lint
   name: tombi-lint
-  description: "A TOML formatter"
+  description: "A TOML linter"
   entry: tombi lint
   language: python
   types: [toml]
