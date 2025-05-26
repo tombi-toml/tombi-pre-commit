@@ -4,7 +4,6 @@
   entry: tombi format
   language: python
   types: [toml]
-  args: ["--offline"]
 
 - id: tombi-lint
   name: tombi-lint
@@ -12,4 +11,3 @@
   entry: tombi lint
   language: python
   types: [toml]
-  args: ["--offline"]

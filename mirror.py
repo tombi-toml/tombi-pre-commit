@@ -27,7 +27,10 @@ def main():
     # Get newer versions from PyPI
     resp = urllib3.request("GET", "https://pypi.org/pypi/tombi/json")
     if resp.status != 200:
-        raise RuntimeError
+        raise RuntimeError(
+            f"Failed to fetch package information from PyPI. "
+            f"Status code: {resp.status} Reason: {resp.reason}"
+        )
 
     versions = [Version(release) for release in resp.json()["releases"]]
     versions = sorted(

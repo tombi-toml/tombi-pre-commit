@@ -15,7 +15,6 @@ repos:
   rev: v0.3.54
   hooks:
     - id: tombi-format
-
 ```
 
 Optionally, you can also install the tombi linter as a pre-commit hook:
@@ -27,4 +26,16 @@ repos:
   hooks:
     - id: tombi-format
     - id: tombi-lint
+```
+
+For both hooks, the `--offline` flag can be added to avoid network calls.
+```yaml
+repos:
+- repo: https://github.com/tombi-toml/tombi-pre-commit
+  rev: v0.3.54
+  hooks:
+    - id: tombi-format
+      args: ["--offline"]
+    - id: tombi-lint
+      args: ["--offline"]
 ```
