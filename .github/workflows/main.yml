@@ -1,0 +1,22 @@
+name: main
+on:
+  workflow_dispatch:
+
+jobs:
+  release:
+    name: "Release pre-commit tags"
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+    - uses: actions/checkout@v4
+    - uses: astral-sh/setup-uv@v5
+      with:
+        version: "latest"
+
+    - run: git config --global user.name 'Github Actions'
+    - run: git config --global user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+    - run: uv run --no-project mirror.py
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

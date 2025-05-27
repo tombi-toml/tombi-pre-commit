@@ -1,0 +1,13 @@
+- id: tombi-format
+  name: tombi-format
+  description: "A TOML formatter"
+  entry: tombi format
+  language: python
+  types: [toml]
+
+- id: tombi-lint
+  name: tombi-lint
+  description: "A TOML linter"
+  entry: tombi lint
+  language: python
+  types: [toml]
