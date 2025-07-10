@@ -2,5 +2,5 @@
 name = "tombi-pre-commit"
 version = "0.0.0"
 dependencies = [
-    "tombi==0.4.26",
+    "tombi==0.4.27",
 ]
