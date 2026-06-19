@@ -1,0 +1,32 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Tombi version tag to mirror, for example v1.2.3"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: "Release pre-commit tag"
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+
+      - run: git config --global user.name 'github-actions[bot]'
+      - run: git config --global user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+      - run: uv run --no-project mirror.py "${{ inputs.version }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

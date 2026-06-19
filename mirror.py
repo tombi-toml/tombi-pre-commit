@@ -2,55 +2,54 @@
 # requires-python = ">=3.12"
 # dependencies = [
 #     "packaging",
-#     "urllib3",
 # ]
 # ///
+import argparse
 import re
 import subprocess
 from pathlib import Path
 
-import tomllib
-import urllib3
-from packaging.requirements import Requirement
 from packaging.version import Version
 
 
 def main():
-    with open(Path(__file__).parent / "pyproject.toml", "rb") as f:
-        pyproject = tomllib.load(f)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("version", help="Tombi version tag to mirror, for example v1.2.3")
+    args = parser.parse_args()
 
-    # Get current version
-    tombi_dep = Requirement(pyproject["project"]["dependencies"][0])
-    current_version = Version(list(tombi_dep.specifier)[0].version)
-    print(f"Current version: {current_version}")
+    tag_name = args.version
+    if not tag_name.startswith("v"):
+        tag_name = f"v{tag_name}"
 
-    # Get newer versions from PyPI
-    resp = urllib3.request("GET", "https://pypi.org/pypi/tombi/json")
-    if resp.status != 200:
-        raise RuntimeError(
-            f"Failed to fetch package information from PyPI. "
-            f"Status code: {resp.status} Reason: {resp.reason}"
-        )
+    version = Version(tag_name.removeprefix("v"))
+    if version.is_prerelease:
+        raise ValueError(f"Pre-release versions are not mirrored: {tag_name}")
 
-    versions = [Version(release) for release in resp.json()["releases"]]
-    versions = sorted(
-        v for v in versions if v > current_version and not v.is_prerelease
-    )
+    print(f"Version to mirror: {tag_name}")
 
-    print(f"Versions to mirror: {versions}")
-    for i, version in enumerate(versions):
-        tag_name = f"v{version}"
+    tag_exists = ref_exists(f"refs/tags/{tag_name}")
+    has_release = release_exists(tag_name)
+    if tag_exists and has_release:
+        print(f"Tag and release {tag_name} already exist. Skipping release.")
+        return
+
+    if tag_exists:
+        print(f"Tag {tag_name} already exists. Skipping commit and tag creation.")
+    else:
         paths = update_version_in_files(version)
 
         subprocess.run(["git", "add", *paths], check=True)
-        subprocess.run(["git", "commit", "-m", f"Tombi {tag_name}"], check=True)
+        if has_staged_changes():
+            subprocess.run(["git", "commit", "-m", f"Tombi {tag_name}"], check=True)
+        else:
+            print("Version files are already up to date.")
 
         subprocess.run(["git", "tag", tag_name], check=True)
-        subprocess.run(
-            ["git", "push", "origin", "HEAD:refs/heads/main", "--tags"], check=True
-        )
+        subprocess.run(["git", "push", "origin", "HEAD:refs/heads/main"], check=True)
+        subprocess.run(["git", "push", "origin", f"refs/tags/{tag_name}"], check=True)
 
-        gh_release_cmd = [
+    subprocess.run(
+        [
             "gh",
             "release",
             "create",
@@ -60,10 +59,48 @@ def main():
             "--notes",
             f"See: https://github.com/tombi-toml/tombi/releases/tag/{tag_name}",
             "--verify-tag",
-        ]
-        if i == len(versions) - 1:
-            gh_release_cmd.append("--latest")
-        subprocess.run(gh_release_cmd, check=True)
+            "--latest=false",
+        ],
+        check=True,
+    )
+
+
+def ref_exists(ref: str) -> bool:
+    result = subprocess.run(
+        ["git", "ls-remote", "--exit-code", "origin", ref],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    if result.returncode == 0:
+        return True
+    if result.returncode == 2:
+        return False
+    result.check_returncode()
+    raise AssertionError("unreachable")
+
+
+def release_exists(tag_name: str) -> bool:
+    result = subprocess.run(
+        ["gh", "release", "view", tag_name],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    if result.returncode == 0:
+        return True
+    if result.returncode == 1:
+        return False
+    result.check_returncode()
+    raise AssertionError("unreachable")
+
+
+def has_staged_changes() -> bool:
+    result = subprocess.run(["git", "diff", "--cached", "--quiet"])
+    if result.returncode == 0:
+        return False
+    if result.returncode == 1:
+        return True
+    result.check_returncode()
+    raise AssertionError("unreachable")
 
 
 def update_version_in_files(version: Version) -> tuple[str, ...]:
