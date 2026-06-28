@@ -149,8 +149,8 @@ def update_version_in_files(
         content = re.sub(r"rev: v\d+\.\d+\.\d+", f"rev: v{version}", content)
         tombi_commit_line = (
             "Mirrored tombi "
-            f"[`{tag_name}`]({TOMBI_RELEASE_URL_BASE}/{tag_name}) commit: "
-            f"`{tombi_commit_sha}`."
+            f"[`{tag_name}`]({TOMBI_RELEASE_URL_BASE}/{tag_name}) "
+            f"(commit: `{tombi_commit_sha}`)."
         )
         if "Mirrored tombi " in content:
             return re.sub(r"Mirrored tombi .+", lambda _: tombi_commit_line, content)
