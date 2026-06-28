@@ -13,7 +13,6 @@ from packaging.version import Version
 
 
 TOMBI_REPOSITORY_URL = "https://github.com/tombi-toml/tombi.git"
-TOMBI_COMMIT_URL_BASE = "https://github.com/tombi-toml/tombi/commit"
 TOMBI_RELEASE_URL_BASE = "https://github.com/tombi-toml/tombi/releases/tag"
 
 
@@ -151,7 +150,7 @@ def update_version_in_files(
         tombi_commit_line = (
             "Mirrored tombi "
             f"[`{tag_name}`]({TOMBI_RELEASE_URL_BASE}/{tag_name}) commit: "
-            f"[`{tombi_commit_sha}`]({TOMBI_COMMIT_URL_BASE}/{tombi_commit_sha})."
+            f"`{tombi_commit_sha}`."
         )
         if "Mirrored tombi " in content:
             return re.sub(r"Mirrored tombi .+", lambda _: tombi_commit_line, content)
