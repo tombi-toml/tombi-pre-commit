@@ -14,6 +14,7 @@ from packaging.version import Version
 
 TOMBI_REPOSITORY_URL = "https://github.com/tombi-toml/tombi.git"
 TOMBI_COMMIT_URL_BASE = "https://github.com/tombi-toml/tombi/commit"
+TOMBI_RELEASE_URL_BASE = "https://github.com/tombi-toml/tombi/releases/tag"
 
 
 def main():
@@ -43,7 +44,7 @@ def main():
         tombi_commit_sha = resolve_tombi_commit_sha(tag_name)
         print(f"Tombi commit to mirror: {tombi_commit_sha}")
 
-        paths = update_version_in_files(version, tombi_commit_sha)
+        paths = update_version_in_files(version, tag_name, tombi_commit_sha)
 
         subprocess.run(["git", "add", *paths], check=True)
         if has_staged_changes():
@@ -139,18 +140,21 @@ def resolve_tombi_commit_sha(tag_name: str) -> str:
     return commit_sha
 
 
-def update_version_in_files(version: Version, tombi_commit_sha: str) -> tuple[str, ...]:
+def update_version_in_files(
+    version: Version, tag_name: str, tombi_commit_sha: str
+) -> tuple[str, ...]:
     def replace_pyproject_toml(content: str) -> str:
         return re.sub(r'"tombi==.*"', f'"tombi=={version}"', content)
 
     def replace_readme_md(content: str) -> str:
         content = re.sub(r"rev: v\d+\.\d+\.\d+", f"rev: v{version}", content)
         tombi_commit_line = (
-            "Mirrored tombi commit: "
+            "Mirrored tombi "
+            f"[`{tag_name}`]({TOMBI_RELEASE_URL_BASE}/{tag_name}) commit: "
             f"[`{tombi_commit_sha}`]({TOMBI_COMMIT_URL_BASE}/{tombi_commit_sha})."
         )
-        if "Mirrored tombi commit:" in content:
-            return re.sub(r"Mirrored tombi commit: .+", tombi_commit_line, content)
+        if "Mirrored tombi " in content:
+            return re.sub(r"Mirrored tombi .+", tombi_commit_line, content)
         return content.replace(
             "[PyPI](https://pypi.org/project/tombi/).\n",
             f"[PyPI](https://pypi.org/project/tombi/).\n\n{tombi_commit_line}\n",
