@@ -7,7 +7,7 @@ Distributed as a standalone repository to enable installing tombi via prebuilt w
 
 ### Installation
 
-Add the following to your `.pre-commit-config.yaml`:
+To run `tombi format`, add the following to your `.pre-commit-config.yaml`:
 
 ```yaml
 repos:
@@ -17,18 +17,18 @@ repos:
     - id: tombi-format
 ```
 
-Optionally, you can also install the tombi linter as a pre-commit hook:
+To run `tombi lint`, add the following instead:
 
 ```yaml
 repos:
 - repo: https://github.com/tombi-toml/tombi-pre-commit
   rev: v1.1.6
   hooks:
-    - id: tombi-format
     - id: tombi-lint
 ```
 
-For both hooks, the `--offline` flag can be added to avoid network calls.
+For both hooks, the `--offline` flag can be added to avoid network calls:
+
 ```yaml
 repos:
 - repo: https://github.com/tombi-toml/tombi-pre-commit
