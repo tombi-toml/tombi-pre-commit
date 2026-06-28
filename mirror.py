@@ -154,7 +154,7 @@ def update_version_in_files(
             f"[`{tombi_commit_sha}`]({TOMBI_COMMIT_URL_BASE}/{tombi_commit_sha})."
         )
         if "Mirrored tombi " in content:
-            return re.sub(r"Mirrored tombi .+", tombi_commit_line, content)
+            return re.sub(r"Mirrored tombi .+", lambda _: tombi_commit_line, content)
         return content.replace(
             "[PyPI](https://pypi.org/project/tombi/).\n",
             f"[PyPI](https://pypi.org/project/tombi/).\n\n{tombi_commit_line}\n",
