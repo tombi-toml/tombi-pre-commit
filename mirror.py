@@ -12,6 +12,10 @@ from pathlib import Path
 from packaging.version import Version
 
 
+TOMBI_REPOSITORY_URL = "https://github.com/tombi-toml/tombi.git"
+TOMBI_COMMIT_URL_BASE = "https://github.com/tombi-toml/tombi/commit"
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("version", help="Tombi version tag to mirror, for example v1.2.3")
@@ -36,7 +40,10 @@ def main():
     if tag_exists:
         print(f"Tag {tag_name} already exists. Skipping commit and tag creation.")
     else:
-        paths = update_version_in_files(version)
+        tombi_commit_sha = resolve_tombi_commit_sha(tag_name)
+        print(f"Tombi commit to mirror: {tombi_commit_sha}")
+
+        paths = update_version_in_files(version, tombi_commit_sha)
 
         subprocess.run(["git", "add", *paths], check=True)
         if has_staged_changes():
@@ -103,12 +110,51 @@ def has_staged_changes() -> bool:
     raise AssertionError("unreachable")
 
 
-def update_version_in_files(version: Version) -> tuple[str, ...]:
+def resolve_tombi_commit_sha(tag_name: str) -> str:
+    peeled_ref = f"refs/tags/{tag_name}^{{}}"
+    result = subprocess.run(
+        [
+            "git",
+            "ls-remote",
+            TOMBI_REPOSITORY_URL,
+            f"refs/tags/{tag_name}",
+            peeled_ref,
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    refs = {}
+    for line in result.stdout.splitlines():
+        sha, ref = line.split(maxsplit=1)
+        refs[ref] = sha
+
+    commit_sha = refs.get(peeled_ref) or refs.get(f"refs/tags/{tag_name}")
+    if commit_sha is None:
+        raise ValueError(f"Tombi tag does not exist: {tag_name}")
+    if not re.fullmatch(r"[0-9a-f]{40}", commit_sha):
+        raise ValueError(f"Unexpected tombi commit SHA for {tag_name}: {commit_sha}")
+
+    return commit_sha
+
+
+def update_version_in_files(version: Version, tombi_commit_sha: str) -> tuple[str, ...]:
     def replace_pyproject_toml(content: str) -> str:
         return re.sub(r'"tombi==.*"', f'"tombi=={version}"', content)
 
     def replace_readme_md(content: str) -> str:
-        return re.sub(r"rev: v\d+\.\d+\.\d+", f"rev: v{version}", content)
+        content = re.sub(r"rev: v\d+\.\d+\.\d+", f"rev: v{version}", content)
+        tombi_commit_line = (
+            "Mirrored tombi commit: "
+            f"[`{tombi_commit_sha}`]({TOMBI_COMMIT_URL_BASE}/{tombi_commit_sha})."
+        )
+        if "Mirrored tombi commit:" in content:
+            return re.sub(r"Mirrored tombi commit: .+", tombi_commit_line, content)
+        return content.replace(
+            "[PyPI](https://pypi.org/project/tombi/).\n",
+            f"[PyPI](https://pypi.org/project/tombi/).\n\n{tombi_commit_line}\n",
+        )
 
     paths = {
         "pyproject.toml": replace_pyproject_toml,
