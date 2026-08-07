@@ -18,7 +18,9 @@ TOMBI_RELEASE_URL_BASE = "https://github.com/tombi-toml/tombi/releases/tag"
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("version", help="Tombi version tag to mirror, for example v1.2.3")
+    parser.add_argument(
+        "version", help="Tombi version tag to mirror, for example v1.2.3"
+    )
     args = parser.parse_args()
 
     tag_name = args.version
@@ -30,11 +32,17 @@ def main():
         raise ValueError(f"Pre-release versions are not mirrored: {tag_name}")
 
     print(f"Version to mirror: {tag_name}")
+    latest_option = release_latest_option(version, resolve_latest_tombi_version())
+    is_latest = latest_option == "--latest"
 
     tag_exists = ref_exists(f"refs/tags/{tag_name}")
     has_release = release_exists(tag_name)
     if tag_exists and has_release:
-        print(f"Tag and release {tag_name} already exist. Skipping release.")
+        if is_latest:
+            print(f"Marking existing release {tag_name} as latest.")
+            subprocess.run(["gh", "release", "edit", tag_name, "--latest"], check=True)
+        else:
+            print(f"Tag and release {tag_name} already exist. Skipping release.")
         return
 
     if tag_exists:
@@ -66,7 +74,7 @@ def main():
             "--notes",
             f"See: https://github.com/tombi-toml/tombi/releases/tag/{tag_name}",
             "--verify-tag",
-            "--latest=false",
+            latest_option,
         ],
         check=True,
     )
@@ -108,6 +116,31 @@ def has_staged_changes() -> bool:
         return True
     result.check_returncode()
     raise AssertionError("unreachable")
+
+
+def resolve_latest_tombi_version() -> Version:
+    result = subprocess.run(
+        ["git", "ls-remote", "--tags", TOMBI_REPOSITORY_URL, "refs/tags/v*"],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    versions = []
+    for line in result.stdout.splitlines():
+        _, ref = line.split(maxsplit=1)
+        match = re.fullmatch(r"refs/tags/v(\d+\.\d+\.\d+)", ref)
+        if match is not None:
+            versions.append(Version(match.group(1)))
+
+    if not versions:
+        raise ValueError("No stable Tombi tags found")
+
+    return max(versions)
+
+
+def release_latest_option(version: Version, latest_version: Version) -> str:
+    return "--latest" if version == latest_version else "--latest=false"
 
 
 def resolve_tombi_commit_sha(tag_name: str) -> str:
