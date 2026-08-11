@@ -5,7 +5,7 @@ A [pre-commit](https://pre-commit.com/) hook for [tombi](https://github.com/tomb
 Distributed as a standalone repository to enable installing tombi via prebuilt wheels from
 [PyPI](https://pypi.org/project/tombi/).
 
-Mirrored tombi [`v1.2.10`](https://github.com/tombi-toml/tombi/releases/tag/v1.2.10) (commit: `7f7da7a7bd831226c3df36cbff5e91fb270f9f4d`).
+Mirrored tombi [`v1.3.0`](https://github.com/tombi-toml/tombi/releases/tag/v1.3.0) (commit: `f37bd2c862ce3b0cc4da4fecf3d3fd4a47de9111`).
 
 ### Installation
 
@@ -14,7 +14,7 @@ To run `tombi format`, add the following to your `.pre-commit-config.yaml`:
 ```yaml
 repos:
 - repo: https://github.com/tombi-toml/tombi-pre-commit
-  rev: v1.2.10
+  rev: v1.3.0
   hooks:
     - id: tombi-format
 ```
@@ -24,7 +24,7 @@ To run `tombi lint`, add the following instead:
 ```yaml
 repos:
 - repo: https://github.com/tombi-toml/tombi-pre-commit
-  rev: v1.2.10
+  rev: v1.3.0
   hooks:
     - id: tombi-lint
 ```
@@ -34,7 +34,7 @@ For both hooks, the `--offline` flag can be added to avoid network calls:
 ```yaml
 repos:
 - repo: https://github.com/tombi-toml/tombi-pre-commit
-  rev: v1.2.10
+  rev: v1.3.0
   hooks:
     - id: tombi-format
       args: ["--offline"]
