@@ -8,22 +8,22 @@ import argparse
 import re
 import subprocess
 from pathlib import Path
+from typing import cast
 
 from packaging.version import Version
-
 
 TOMBI_REPOSITORY_URL = "https://github.com/tombi-toml/tombi.git"
 TOMBI_RELEASE_URL_BASE = "https://github.com/tombi-toml/tombi/releases/tag"
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument(
+    _ = parser.add_argument(
         "version", help="Tombi version tag to mirror, for example v1.2.3"
     )
     args = parser.parse_args()
 
-    tag_name = args.version
+    tag_name = cast(str, args.version)
     if not tag_name.startswith("v"):
         tag_name = f"v{tag_name}"
 
@@ -32,7 +32,9 @@ def main():
         raise ValueError(f"Pre-release versions are not mirrored: {tag_name}")
 
     print(f"Version to mirror: {tag_name}")
-    latest_option = release_latest_option(version, resolve_latest_tombi_version())
+    latest_option = release_latest_option(
+        version, resolve_latest_tombi_version()
+    )
     is_latest = latest_option == "--latest"
 
     tag_exists = ref_exists(f"refs/tags/{tag_name}")
@@ -40,30 +42,42 @@ def main():
     if tag_exists and has_release:
         if is_latest:
             print(f"Marking existing release {tag_name} as latest.")
-            subprocess.run(["gh", "release", "edit", tag_name, "--latest"], check=True)
+            _ = subprocess.run(
+                ["gh", "release", "edit", tag_name, "--latest"], check=True
+            )
         else:
-            print(f"Tag and release {tag_name} already exist. Skipping release.")
+            print(
+                f"Tag and release {tag_name} already exist. Skipping release."
+            )
         return
 
     if tag_exists:
-        print(f"Tag {tag_name} already exists. Skipping commit and tag creation.")
+        print(
+            f"Tag {tag_name} already exists. Skipping commit and tag creation."
+        )
     else:
         tombi_commit_sha = resolve_tombi_commit_sha(tag_name)
         print(f"Tombi commit to mirror: {tombi_commit_sha}")
 
         paths = update_version_in_files(version, tag_name, tombi_commit_sha)
 
-        subprocess.run(["git", "add", *paths], check=True)
+        _ = subprocess.run(["git", "add", *paths], check=True)
         if has_staged_changes():
-            subprocess.run(["git", "commit", "-m", f"Tombi {tag_name}"], check=True)
+            _ = subprocess.run(
+                ["git", "commit", "-m", f"Tombi {tag_name}"], check=True
+            )
         else:
             print("Version files are already up to date.")
 
-        subprocess.run(["git", "tag", tag_name], check=True)
-        subprocess.run(["git", "push", "origin", "HEAD:refs/heads/main"], check=True)
-        subprocess.run(["git", "push", "origin", f"refs/tags/{tag_name}"], check=True)
+        _ = subprocess.run(["git", "tag", tag_name], check=True)
+        _ = subprocess.run(
+            ["git", "push", "origin", "HEAD:refs/heads/main"], check=True
+        )
+        _ = subprocess.run(
+            ["git", "push", "origin", f"refs/tags/{tag_name}"], check=True
+        )
 
-    subprocess.run(
+    _ = subprocess.run(
         [
             "gh",
             "release",
@@ -85,6 +99,7 @@ def ref_exists(ref: str) -> bool:
         ["git", "ls-remote", "--exit-code", "origin", ref],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
+        check=False,
     )
     if result.returncode == 0:
         return True
@@ -99,6 +114,7 @@ def release_exists(tag_name: str) -> bool:
         ["gh", "release", "view", tag_name],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
+        check=False,
     )
     if result.returncode == 0:
         return True
@@ -109,7 +125,7 @@ def release_exists(tag_name: str) -> bool:
 
 
 def has_staged_changes() -> bool:
-    result = subprocess.run(["git", "diff", "--cached", "--quiet"])
+    result = subprocess.run(["git", "diff", "--cached", "--quiet"], check=False)
     if result.returncode == 0:
         return False
     if result.returncode == 1:
@@ -126,7 +142,7 @@ def resolve_latest_tombi_version() -> Version:
         text=True,
     )
 
-    versions = []
+    versions: list[Version] = []
     for line in result.stdout.splitlines():
         _, ref = line.split(maxsplit=1)
         match = re.fullmatch(r"refs/tags/v(\d+\.\d+\.\d+)", ref)
@@ -158,7 +174,7 @@ def resolve_tombi_commit_sha(tag_name: str) -> str:
         text=True,
     )
 
-    refs = {}
+    refs: dict[str, str] = {}
     for line in result.stdout.splitlines():
         sha, ref = line.split(maxsplit=1)
         refs[ref] = sha
@@ -167,7 +183,9 @@ def resolve_tombi_commit_sha(tag_name: str) -> str:
     if commit_sha is None:
         raise ValueError(f"Tombi tag does not exist: {tag_name}")
     if not re.fullmatch(r"[0-9a-f]{40}", commit_sha):
-        raise ValueError(f"Unexpected tombi commit SHA for {tag_name}: {commit_sha}")
+        raise ValueError(
+            f"Unexpected tombi commit SHA for {tag_name}: {commit_sha}"
+        )
 
     return commit_sha
 
@@ -180,13 +198,16 @@ def update_version_in_files(
 
     def replace_readme_md(content: str) -> str:
         content = re.sub(r"rev: v\d+\.\d+\.\d+", f"rev: v{version}", content)
+        content = re.sub(r"rev = v\d+\.\d+\.\d+", f"rev = v{version}", content)
         tombi_commit_line = (
             "Mirrored tombi "
             f"[`{tag_name}`]({TOMBI_RELEASE_URL_BASE}/{tag_name}) "
             f"(commit: `{tombi_commit_sha}`)."
         )
         if "Mirrored tombi " in content:
-            return re.sub(r"Mirrored tombi .+", lambda _: tombi_commit_line, content)
+            return re.sub(
+                r"Mirrored tombi .+", lambda _: tombi_commit_line, content
+            )
         return content.replace(
             "[PyPI](https://pypi.org/project/tombi/).\n",
             f"[PyPI](https://pypi.org/project/tombi/).\n\n{tombi_commit_line}\n",
@@ -198,7 +219,7 @@ def update_version_in_files(
     }
     for path, replacer in paths.items():
         updated_content = replacer(content=Path(path).read_text())
-        Path(path).write_text(updated_content)
+        _ = Path(path).write_text(updated_content)
 
     return tuple(paths.keys())
 
