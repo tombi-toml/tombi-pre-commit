@@ -46,7 +46,7 @@ To use it with [prek](https://github.com/j178/prek), add this to your `prek.toml
 ```
 [[repos]]
 repo = "https://github.com/tombi-toml/tombi-pre-commit"
-rev = "v1.4.1"
+rev = "v1.7.1"
 hooks = [
   { id = "tombi-format", args = ["--offline"] },
   { id = "tombi-lint", args = ["--offline"] },
