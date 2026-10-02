@@ -4,8 +4,11 @@
 #     "packaging",
 # ]
 # ///
+import os
 import subprocess
+import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 from packaging.version import Version
@@ -95,6 +98,35 @@ class ExistingReleaseTest(unittest.TestCase):
         mirror.main()
 
         run.assert_not_called()
+
+
+class UpdateVersionInFilesTest(unittest.TestCase):
+    def test_updates_pre_commit_and_prek_revisions(self):
+        readme = Path(__file__).parent.parent / "README.md"
+        original_readme = readme.read_text()
+        sha = "a" * 40
+
+        with tempfile.TemporaryDirectory() as tmp:
+            cwd = os.getcwd()
+            os.chdir(tmp)
+            try:
+                Path("README.md").write_text(original_readme)
+                Path("pyproject.toml").write_text(
+                    '[project]\ndependencies = [\n    "tombi==1.0.0",\n]\n'
+                )
+
+                mirror.update_version_in_files(Version("9.8.7"), "v9.8.7", sha)
+
+                updated = Path("README.md").read_text()
+                pyproject = Path("pyproject.toml").read_text()
+            finally:
+                os.chdir(cwd)
+
+        self.assertIn("rev: v9.8.7", updated)
+        self.assertIn('rev = "v9.8.7"', updated)
+        self.assertNotRegex(updated, r'rev(: | = "?)v(?!9\.8\.7)')
+        self.assertIn(f"(commit: `{sha}`)", updated)
+        self.assertIn('"tombi==9.8.7"', pyproject)
 
 
 if __name__ == "__main__":

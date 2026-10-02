@@ -180,6 +180,7 @@ def update_version_in_files(
 
     def replace_readme_md(content: str) -> str:
         content = re.sub(r"rev: v\d+\.\d+\.\d+", f"rev: v{version}", content)
+        content = re.sub(r'rev = "v\d+\.\d+\.\d+"', f'rev = "v{version}"', content)
         tombi_commit_line = (
             "Mirrored tombi "
             f"[`{tag_name}`]({TOMBI_RELEASE_URL_BASE}/{tag_name}) "
