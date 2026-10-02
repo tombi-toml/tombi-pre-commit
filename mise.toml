@@ -1,0 +1,31 @@
+[tools]
+python = "3.13"
+uv = "0.12.22"
+ruff = "0.16.10"
+ty = "0.0.84"
+
+[tasks.install]
+description = "Create .venv and install the dependencies used by mirror.py"
+run = "uv venv --allow-existing && uv pip install packaging"
+
+[tasks.lint]
+description = "Run ruff lint"
+run = "ruff check"
+
+[tasks.format-check]
+description = "Check ruff formatting"
+run = "ruff format --check"
+
+[tasks.typecheck]
+description = "Run ty type check"
+depends = ["install"]
+run = "ty check --python .venv --extra-search-path ."
+
+[tasks.test]
+description = "Run unit tests"
+depends = ["install"]
+run = ".venv/bin/python -m unittest tests.test_mirror"
+
+[tasks.check]
+description = "Run every check"
+depends = ["lint", "format-check", "typecheck", "test"]
