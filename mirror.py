@@ -11,7 +11,6 @@ from pathlib import Path
 
 from packaging.version import Version
 
-
 TOMBI_REPOSITORY_URL = "https://github.com/tombi-toml/tombi.git"
 TOMBI_RELEASE_URL_BASE = "https://github.com/tombi-toml/tombi/releases/tag"
 
@@ -85,6 +84,7 @@ def ref_exists(ref: str) -> bool:
         ["git", "ls-remote", "--exit-code", "origin", ref],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
+        check=False,
     )
     if result.returncode == 0:
         return True
@@ -99,6 +99,7 @@ def release_exists(tag_name: str) -> bool:
         ["gh", "release", "view", tag_name],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
+        check=False,
     )
     if result.returncode == 0:
         return True
@@ -109,7 +110,7 @@ def release_exists(tag_name: str) -> bool:
 
 
 def has_staged_changes() -> bool:
-    result = subprocess.run(["git", "diff", "--cached", "--quiet"])
+    result = subprocess.run(["git", "diff", "--cached", "--quiet"], check=False)
     if result.returncode == 0:
         return False
     if result.returncode == 1:
