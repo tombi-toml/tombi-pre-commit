@@ -5,7 +5,7 @@ A [pre-commit](https://pre-commit.com/) hook for [tombi](https://github.com/tomb
 Distributed as a standalone repository to enable installing tombi via prebuilt wheels from
 [PyPI](https://pypi.org/project/tombi/).
 
-Mirrored tombi [`v1.7.2`](https://github.com/tombi-toml/tombi/releases/tag/v1.7.2) (commit: `e9b0c379f524172905da9d781ec0e4f9cf3991fa`).
+Mirrored tombi [`v1.7.3`](https://github.com/tombi-toml/tombi/releases/tag/v1.7.3) (commit: `6688bb07154e917f8471e41067f6401275f14ac0`).
 
 ### Installation
 
@@ -14,7 +14,7 @@ To run `tombi format`, add the following to your `.pre-commit-config.yaml`:
 ```yaml
 repos:
 - repo: https://github.com/tombi-toml/tombi-pre-commit
-  rev: v1.7.2
+  rev: v1.7.3
   hooks:
     - id: tombi-format
 ```
@@ -24,7 +24,7 @@ To run `tombi lint`, add the following instead:
 ```yaml
 repos:
 - repo: https://github.com/tombi-toml/tombi-pre-commit
-  rev: v1.7.2
+  rev: v1.7.3
   hooks:
     - id: tombi-lint
 ```
@@ -34,7 +34,7 @@ For both hooks, the `--offline` flag can be added to avoid network calls:
 ```yaml
 repos:
 - repo: https://github.com/tombi-toml/tombi-pre-commit
-  rev: v1.7.2
+  rev: v1.7.3
   hooks:
     - id: tombi-format
       args: ["--offline"]
@@ -46,7 +46,7 @@ To use it with [prek](https://github.com/j178/prek), add this to your `prek.toml
 ```
 [[repos]]
 repo = "https://github.com/tombi-toml/tombi-pre-commit"
-rev = "v1.7.2"
+rev = "v1.7.3"
 hooks = [
   { id = "tombi-format", args = ["--offline"] },
   { id = "tombi-lint", args = ["--offline"] },
