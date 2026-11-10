@@ -71,7 +71,11 @@ def main():
             "--title",
             tag_name,
             "--notes",
-            f"See: https://github.com/tombi-toml/tombi/releases/tag/{tag_name}",
+            (
+                f"This tombi-pre-commit release matches [tombi {tag_name}]"
+                f"({TOMBI_RELEASE_URL_BASE}/{tag_name})."
+            ),
+            "--generate-notes",
             "--verify-tag",
             latest_option,
         ],
